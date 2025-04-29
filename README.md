@@ -62,7 +62,7 @@ This is a multimodal approach to South Asian fashion analysis by fine-tuning Ope
   - Python 3.10, PyTorch 2.0, Transformers 4.30  
   - Dependencies: see [requirements.txt](./requirements.txt)  
 - **Data Storage:**  
-  - Raw images & JSON in Google Drive (24 GB)  
+  - Raw images & JSON in Google Drive (2.7 GB)  
   - Processed data — CSV splits + resized images (224×224)  
 - **Compute:**  
   - Colab Pro (T4/GPU) or local A100
