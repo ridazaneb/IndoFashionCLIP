@@ -1,14 +1,13 @@
 # South Asian Fashion Trend Prediction with CLIP
 
-**Authors:** Your Name, Collaborator Name  
-**Affiliation:** Your University / Lab Name  
-**Date:** April 2025  
+S. Rida Zaneb  
+Kenyon College  
 
 ---
 
-## Abstract
 
-We present a multimodal approach to South Asian fashion analysis by fine-tuning OpenAI’s CLIP model on the **IndoFashion** dataset—a balanced, 106 K-image corpus covering 15 categories of Indian ethnic garments. Beyond classification, we perform embedding-based clustering to uncover emerging style trends. Our pipeline also includes a Streamlit dashboard for interactive exploration and prediction.
+
+This is a multimodal approach to South Asian fashion analysis by fine-tuning OpenAI’s CLIP model on the **IndoFashion** dataset—a balanced, 106 K-image corpus covering 15 categories of Indian ethnic garments. Beyond classification, we perform embedding-based clustering to uncover emerging style trends. Our pipeline also includes a Streamlit dashboard for interactive exploration and prediction.
 
 ---
 
