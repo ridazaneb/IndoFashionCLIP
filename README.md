@@ -7,8 +7,7 @@ Kenyon College
 
 
 
-This is a multimodal approach to South Asian fashion analysis by fine-tuning OpenAI’s CLIP model on the **IndoFashion** dataset—a balanced, 106 K-image corpus covering 15 categories of Indian ethnic garments. Beyond classification, we perform embedding-based clustering to uncover emerging style trends. Our pipeline also includes a Streamlit dashboard for interactive exploration and prediction.
-
+This is a vision approach to South Asian fashion analysis by fine-tuningOpenAI’s **CLIPVisionModel** (image encoder only)  on the **IndoFashion** dataset—a balanced, 106 K-image corpus covering 15 categories of Indian ethnic garments. It uses CLIP’s vision encoder as a powerful feature extractor and fine-tunes it with a classification head to predict ethnic clothing categories.
 ---
 
 ## 1. Background & Motivation
@@ -27,75 +26,93 @@ This is a multimodal approach to South Asian fashion analysis by fine-tuning Ope
 | Validation  |   7,500 | Held-out for hyperparameter tuning              |
 | Test        |   7,500 | Final held-out for reporting results            |
 
-- **Sources:** Scraped from Amazon, Flipkart, Myntra, Google Image Search.  
-- **Annotations:**  
-  - `class_label` (e.g. `saree`, `lehenga`, `kurta`)  
-  - `product_title`, `brand`, `color` (optional)  
-  - **Synthetic captions** generated via regex rules (e.g. `"a red saree"`) for CLIP alignment.
+- **Subset Used**: 500 images/class × 15 classes = **7,500 training images**
+- **Metadata**: Each image labeled using newline-delimited JSON containing:
+  - `image_path`
+  - `class_label`
+ 
+### Preprocessing
+
+- Images resized to **224×224**
+- Augmentations: `RandomHorizontalFlip`, `ColorJitter`, `RandomRotation`
+- Normalized to CLIP's input distribution
+---
+
+## 3. Model Architecture
+
+### Vision Backbone
+- `CLIPVisionModel` from HuggingFace
+- Pretrained weights (`openai/clip-vit-base-patch32`)
+- Outputs 512-dimensional image embeddings
+
+### Classifier Head
+- Linear layer: `nn.Linear(512, 15)`
+- Softmax for prediction
+- Cross-entropy loss
+
+### Training Details
+
+| Hyperparameter | Value |
+|----------------|--------|
+| Optimizer      | AdamW |
+| Learning Rate  | 3e-5   |
+| Epochs         | 15     |
+| Batch Size     | 32     |
+| Warmup Steps   | 10% of total |
+| Early Stopping | 3-epoch patience |
+| Device         | A100 GPU (Colab Pro) |
 
 ---
 
-## 3. Methodology
+## 4. Evaluation Results
 
-### 3.1 CLIP Fine-Tuning
+Model tested on a validation/test set with **500 samples/class** (7,500 total). Below are key metrics from the classification report:
 
-1. **Model Choice:** `openai/clip-vit-base-patch32`  
-2. **Contrastive Objective:** maximize cosine similarity between image and its synthetic caption  
-3. **Training Details:**  
-   - Optimizer: AdamW (lr = 5×10⁻⁶)  
-   - Batch size: 64 images/texts  
-   - Epochs: 4 (adjustable)  
-   - Hardware: A100 GPU (Colab Pro+), 24 GB RAM
+### Performance Summary
 
-### 3.2 Embedding-Based Trend Clustering
+| Class           | Precision | Recall | F1-Score |
+|----------------|-----------|--------|----------|
+| **Blouse**     | 0.96      | 0.88   | 0.92     |
+| **Lehenga**    | 0.78      | 0.90   | 0.84     |
+| **Mojaris (W)**| 0.75      | 0.87   | 0.80     |
+| **Dupattas**   | 0.68      | 0.51   | 0.58     |
+| **Dhoti Pants**| 0.63      | 0.42   | 0.51     |
+| **Gowns**      | 0.59      | 0.55   | 0.57     |
 
-1. **Feature Extraction:** freeze fine-tuned CLIP, extract 512-dim image embeddings  
-2. **Dimensionality Reduction:** PCA to 50 components  
-3. **Clustering:** K-means (k = 12) to group visually and semantically similar garments  
-4. **Temporal Analysis (Future):** correlate cluster frequencies with date metadata for seasonality insights
+- **Test Accuracy**: **74.1%**
+- **Test Loss**: **0.9286**
 
----
-
-## 4. Experimental Setup
-
-- **Environment:**  
-  - Python 3.10, PyTorch 2.0, Transformers 4.30  
-  - Dependencies: see [requirements.txt](./requirements.txt)  
-- **Data Storage:**  
-  - Raw images & JSON in Google Drive (2.7 GB)  
-  - Processed data — CSV splits + resized images (224×224)  
-- **Compute:**  
-  - Colab Pro (T4/GPU) or local A100
+> The model performs well on visually distinctive garments like *blouses*, but struggles with overlap-heavy categories like *gowns* and *dhoti pants*.
 
 ---
 
-## 5. Evaluation Metrics
+## 5. System Deployment
 
-| Metric         | Definition                                      | Purpose                                  |
-|---------------:|-------------------------------------------------|------------------------------------------|
-| Accuracy       | (TP+TN)/Total                                   | Overall classification performance       |
-| Precision/Recall/F1 (per class) | Standard definitions                     | Address class imbalance & error types    |
-| Recall@K (CLIP)     | Fraction of correct caption in top-K matches | Assess raw text–image alignment quality  |
-
----
-
-## 6. Results Summary
-
-| Split       | Accuracy | Avg. F1  |
-|------------:|---------:|---------:|
-| Validation  |   𝟴𝟭.𝟲 % |  0.81    |
-| Test        |   𝟴𝟮.𝟯 % |  0.82    |
-
-> **Note:** raw cosine-softmax confidences hover near uniform; we recommend adding a small MLP head or temperature scaling for better calibration.
+### Interactive Dashboard (Streamlit)
+- Upload image → predict garment class
+- Visualize prediction confidence and top-3 classes
+- Can be hosted locally or via HuggingFace Spaces
 
 ---
 
-## 7. Streamlit Dashboard
+## 6. Challenges and Limitations
 
-- **File:** `scripts/app_dashboard.py`  
-- **Features:**  
-  1. Upload an image → predict top-3 garment classes with confidences  
-  2. “Similar styles” gallery via clustering  
-- **Launch:**  
-  ```bash
-  streamlit run scripts/app_dashboard.py
+- **No text-image pairing** used (i.e., not a contrastive CLIP model)
+- **Captioning** is skipped—faster, but may limit generalization
+- **Visual ambiguity**: garments like *dupattas*, *gowns*, and *salwars* often misclassified due to stylistic similarity
+- **Google Drive I/O Quota** is limited for a large training model like this causing significant delays
+
+---
+
+## 7. Future Directions
+
+- **Incorporate Text**: Extend to full CLIP with caption alignment
+- **Trend Forecasting**: Use temporal metadata and clustering
+- **Multilingual Support**: Classify garments with regional caption inputs
+- **Dataset Expansion**: Include more granular categories and regional styles
+
+---
+
+## 8. Equity Statement
+
+This project supports racial and gender equity by highlighting underrepresented South Asian fashion. By adapting models like CLIP for cultural specificity, it helps de-Westernize AI fashion tools and promotes inclusion of traditional aesthetics in modern machine learning pipelines.
