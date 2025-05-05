@@ -88,10 +88,15 @@ Model tested on a validation/test set with **500 samples/class** (7,500 total). 
 
 ## 5. System Deployment
 
-### Interactive Dashboard (Streamlit)
-- Upload image → predict garment class
-- Visualize prediction confidence and top-3 classes
-- Can be hosted locally or via HuggingFace Spaces
+## 📊 Streamlit Dashboard
+
+This app demonstrates the performance of our fine-tuned CLIP model on South Asian fashion images.
+
+Features:
+- Top-3 class predictions from fine-tuned model
+- Prompt Engineering Playground (CLIP zero-shot matching)
+- Interactive result plot carousel (F1 scores, precision-recall)
+
 
 ---
 
